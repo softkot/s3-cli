@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"path"
+	"os"
 	"reflect"
 	"strings"
 
@@ -12,10 +12,10 @@ import (
 )
 
 // This is the global configuration, it's loaded from .s3cfg (by default) then with added
-//  overrides from the command line
+//
+//	overrides from the command line
 //
 // Command lines are by default the snake case version of the the struct names with "-" instead of "_"
-//
 type Config struct {
 	AccessKey    string `ini:"access_key"`
 	SecretKey    string `ini:"secret_key"`
@@ -49,24 +49,22 @@ var (
 )
 
 // Read the configuration file if found, otherwise return default configuration
-//  Precedence order (most important to least):
-//   - Command Line options
-//   - Environment Variables
-//   - Config File
-//   - Default Values
+//
+//	Precedence order (most important to least):
+//	 - Command Line options
+//	 - Environment Variables
+//	 - Config File
+//	 - Default Values
 func NewConfig(c *cli.Context) (*Config, error) {
 	var cfgPath string
 
 	// if obj := c.GlobalStringSlice("config"); len(obj) > 1 {
 	// cfgPath = obj[1]
 	// } else
-	if obj := c.StringSlice("config"); len(obj) > 1 {
-		cfgPath = obj[1]
-	} else if value := GetEnv("HOME"); value != nil {
-		cfgPath = path.Join(*value, ".s3cfg")
-	} else {
-		cfgPath = ".s3cfg"
+	if obj := c.StringSlice("config"); len(obj) > 0 {
+		cfgPath = obj[0]
 	}
+	cfgPath = strings.Replace(cfgPath, "$HOME", os.Getenv("HOME"), 1)
 
 	config, err := loadConfigFile(cfgPath)
 	if err != nil {
